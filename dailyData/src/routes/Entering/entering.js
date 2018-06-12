@@ -31,29 +31,10 @@ const fieldLabels = {
   ceramicsSales : '陶艺销售额',
   throughTicketSales : '通票销售额',
   singleSales : '单次销售额',
-  destroySales : '会员销卡额'
+  destroySales : '会员销卡额',
+  grossEarnings : '总收益',
+  user : '录入人'
 };
-
-const tableData = [
-  {
-    key: '1',
-    workId: '00001',
-    name: 'John Brown',
-    department: 'New York No. 1 Lake Park',
-  },
-  {
-    key: '2',
-    workId: '00002',
-    name: 'Jim Green',
-    department: 'London No. 1 Lake Park',
-  },
-  {
-    key: '3',
-    workId: '00003',
-    name: 'Joe Black',
-    department: 'Sidney No. 1 Lake Park',
-  },
-];
 
 class AdvancedForm extends PureComponent {
   state = {
@@ -253,6 +234,32 @@ class AdvancedForm extends PureComponent {
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={24}>
+              <Col lg={8} md={8} sm={24}>
+                <Form.Item label={fieldLabels.grossEarnings}>
+                  <Input.Group compact>
+                    {getFieldDecorator('grossEarnings', {
+                      initialValue: '',
+                      rules: [{ required: true, message: '请输入销售金额' }],
+                    })(
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                    <Input value='元'
+                           style={{ width: 60 ,'textAlign':'center'}} disabled/>
+                  </Input.Group>
+                </Form.Item>
+              </Col>
+              <Col lg={8} md={8} sm={24}>
+                <Form.Item label={fieldLabels.user}>
+                    {getFieldDecorator('user', {
+                      initialValue: '',
+                      rules: [{ required: true, message: '请输入录入人' }],
+                    })(<Select>
+                      <Option value='陈三日'>陈三日</Option>
+                      <Option value='张三日'>张三日</Option>
+                    </Select>)}
                 </Form.Item>
               </Col>
             </Row>

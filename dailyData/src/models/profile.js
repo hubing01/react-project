@@ -10,6 +10,8 @@ export default {
     advancedOperation3: [],
   },
 
+
+
   effects: {
     *fetchBasic(_, { call, put }) {
       const response = yield call(queryBasicProfile);

@@ -166,6 +166,12 @@ const menuData = [
     path: 'history',
     children: [],
   },
+  {
+    name: '收益报表',
+    icon: 'dashboard',
+    path: 'chart',
+    children: [],
+  },
 ];
 
 function formatter(data, parentPath = '/', parentAuthority) {

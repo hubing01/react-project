@@ -30,12 +30,10 @@ const getValue = obj =>
   Object.keys(obj)
     .map(key => obj[key])
     .join(',');
-const statusMap = ['default', 'processing', 'success', 'error'];
-const status = ['关闭', '运行中', '已上线', '异常'];
 
-@connect(({ rule, loading }) => ({
-  rule,
-  loading: loading.models.rule,
+@connect(({ profit, loading }) => ({
+  profit,
+  loading: loading.effects['profit/fetch'],
 }))
 @Form.create()
 export default class History extends PureComponent {
@@ -48,7 +46,9 @@ export default class History extends PureComponent {
   componentDidMount() {
     const { dispatch } = this.props;
     dispatch({
-      type: 'rule/fetch',
+      type: 'profit/fetch',
+    }).then(() => {
+      console.log('pppp',this.props)
     });
   }
 
@@ -182,7 +182,8 @@ export default class History extends PureComponent {
 
 
   render() {
-    const { rule: { data }, loading } = this.props;
+    const { loading, profit:{data} } = this.props;
+    console.log('pppp2',this.props,loading)
     const { selectedRows, modalVisible } = this.state;
 
     const columns = [
@@ -200,7 +201,7 @@ export default class History extends PureComponent {
       },
       {
         title: '录入人',
-        dataIndex: 'name',
+        dataIndex: 'user',
       },
       // {
       //   title: '录入',
@@ -279,14 +280,13 @@ export default class History extends PureComponent {
                 </span>
               )}
             </div>
-            <StandardTable
+            {data && <StandardTable
               selectedRows={selectedRows}
-              loading={loading}
               data={data}
               columns={columns}
               onSelectRow={this.handleSelectRows}
               onChange={this.handleStandardTableChange}
-            />
+            />}
           </div>
         </Card>
       </PageHeaderLayout>
