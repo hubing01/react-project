@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Chart, Axis, Tooltip, Geom, Legend } from 'bizcharts';
+import { Chart, Axis, Tooltip, Geom, Legend, Guide } from 'bizcharts';
 import Debounce from 'lodash-decorators/debounce';
 import Bind from 'lodash-decorators/bind';
 import autoHeight from '../autoHeight';
@@ -62,11 +62,13 @@ class HuBarAndLine extends Component {
       data,
       color = 'rgba(24, 144, 255, 0.85)',
       padding,
-      scale = {}
+      scale = {},
+      lastAverage,
+      thisAverage
     } = this.props;
 
     const { autoHideXLabels } = this.state;
-
+    const { Line } = Guide;
     const scaleProps = {
       x: {
         type: 'cat',
@@ -94,7 +96,8 @@ class HuBarAndLine extends Component {
     return (
       <div className={styles.chart} style={{ height }} ref={this.handleRoot}>
         <div ref={this.handleRef}>
-          {title && <h4 style={{ marginBottom: 20 }}>{title}</h4>}
+          {title && <h4 className={styles.titleContainer}
+                        style={{ marginBottom: 20 }}>{title}</h4>}
           <Chart
             scale={scaleProps}
             height={title ? height - 41 : height}
@@ -137,6 +140,30 @@ class HuBarAndLine extends Component {
             <Tooltip showTitle={true} crosshairs={false} />
             <Geom type="interval" position="x*y" color={color} tooltip={tooltip}/>
             <Geom type="line" position="x*y1" color="#fdae6b" size={3} shape="smooth" />
+            <Guide>
+              <Line start={['min',lastAverage]}
+                    end= {['max', lastAverage]}
+                    text={{
+                      content: '上周期平均值：' + lastAverage,
+                      position: '80%',
+                      style: {
+                        textAlign: 'end',
+                      }
+                    }}
+                    lineStyle={{stroke:'#fadb14'}}
+              />
+              <Line start={['min',thisAverage]}
+                    end= {['max', thisAverage]}
+                    text={{
+                      content: '本周期平均值：' + thisAverage,
+                      position: 'end',
+                      style: {
+                        textAlign: 'end'
+                      }
+                    }}
+                    lineStyle={{stroke:'#73d13d'}}
+              />
+            </Guide>
           </Chart>
         </div>
       </div>

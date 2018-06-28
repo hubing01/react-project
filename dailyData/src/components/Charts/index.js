@@ -14,6 +14,9 @@ import TagCloud from './TagCloud';
 import TimelineChart from './TimelineChart';
 import HuDoubleLineChart from './HuDoubleLineChart';
 import HuBarAndLine from './HuBarAndLine';
+import HuPie from './HuPie';
+import HuSingleLine from './HuSingleLine'
+import HuSunburst from './HuSunburst'
 
 const yuan = val => `¥ ${numeral(val).format('0,0')}`;
 
@@ -32,7 +35,10 @@ const Charts = {
   TagCloud,
   TimelineChart,
   HuDoubleLineChart,
-  HuBarAndLine
+  HuBarAndLine,
+  HuPie,
+  HuSingleLine,
+  HuSunburst
 };
 
 export {
@@ -51,5 +57,8 @@ export {
   TagCloud,
   TimelineChart,
   HuDoubleLineChart,
-  HuBarAndLine
+  HuBarAndLine,
+  HuPie,
+  HuSingleLine,
+  HuSunburst
 };

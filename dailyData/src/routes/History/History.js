@@ -19,6 +19,7 @@ import {
   Badge,
   Divider,
 } from 'antd';
+import { Link } from 'dva/router'
 import StandardTable from 'components/StandardTable';
 import PageHeaderLayout from '../../layouts/PageHeaderLayout';
 
@@ -183,7 +184,6 @@ export default class History extends PureComponent {
 
   render() {
     const { loading, profit:{data} } = this.props;
-    console.log('pppp2',this.props,loading)
     const { selectedRows, modalVisible } = this.state;
 
     const columns = [
@@ -203,54 +203,13 @@ export default class History extends PureComponent {
         title: '录入人',
         dataIndex: 'user',
       },
-      // {
-      //   title: '录入',
-      //   dataIndex: 'callNo',
-      //   sorter: true,
-      //   align: 'right',
-      //   render: val => `${val} 万`,
-      //   // mark to display a total number
-      //   needTotal: true,
-      // },
-      // {
-      //   title: '状态',
-      //   dataIndex: 'status',
-      //   filters: [
-      //     {
-      //       text: status[0],
-      //       value: 0,
-      //     },
-      //     {
-      //       text: status[1],
-      //       value: 1,
-      //     },
-      //     {
-      //       text: status[2],
-      //       value: 2,
-      //     },
-      //     {
-      //       text: status[3],
-      //       value: 3,
-      //     },
-      //   ],
-      //   onFilter: (value, record) => record.status.toString() === value,
-      //   render(val) {
-      //     return <Badge status={statusMap[val]} text={status[val]} />;
-      //   },
-      // },
-      // {
-      //   title: '更新时间',
-      //   dataIndex: 'updatedAt',
-      //   sorter: true,
-      //   render: val => <span>{moment(val).format('YYYY-MM-DD HH:mm:ss')}</span>,
-      // },
       {
         title: '操作',
-        render: () => (
+        render: (row) => (
           <Fragment>
-            <a href="/#/entering">详情</a>
-            {/*<Divider type="vertical" />*/}
-            {/*<a href="">订阅警报</a>*/}
+            <Link to={{ pathname : `/history/entering/${row.id}` , query:row}}>
+              详情
+            </Link>
           </Fragment>
         ),
       },
@@ -269,6 +228,11 @@ export default class History extends PureComponent {
           <div className={styles.tableList}>
             <div className={styles.tableListForm}>{this.renderSimpleForm()}</div>
             <div className={styles.tableListOperator}>
+              <Button>
+                <Link to={{ pathname : `/history/entering`}} exact="false">
+                  +添加当日数据
+                </Link>
+              </Button>
               {selectedRows.length > 0 && (
                 <span>
                   <Button>批量操作</Button>

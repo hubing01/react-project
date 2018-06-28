@@ -15,8 +15,7 @@ import {
 } from 'antd';
 import { connect } from 'dva';
 import FooterToolbar from 'components/FooterToolbar';
-import PageHeaderLayout from '../../layouts/PageHeaderLayout';
-import TableForm from './../Forms/TableForm';
+import PageHeaderLayout from '../../../layouts/PageHeaderLayout';
 import styles from './entering.less';
 
 const { Option } = Select;
@@ -35,16 +34,86 @@ const fieldLabels = {
   grossEarnings : '总收益',
   user : '录入人'
 };
+const TYPE = {
+  CREAT : 'CREAT',
+  UPDATE : 'UPDATE'
+}
 
 class AdvancedForm extends PureComponent {
   state = {
     width: '100%',
+    type : TYPE.CREAT,
+    id : undefined,
+    isDisabled : false,
+    initialFormValue : {
+      sale_300:'',
+      sale_600 : '',
+      sale_1000 : '',
+      toySales : '',
+      trainsetSales : '',
+      ceramicsSales : '',
+      throughTicketSales : '',
+      singleSales : '',
+      destroySales : '',
+      grossEarnings : '',
+      user : ''
+    }
   };
   componentDidMount() {
     window.addEventListener('resize', this.resizeFooterToolbar);
+    this.handleInitial(this.props.location);
+  }
+  componentWillReceiveProps(nextProps){
+    if (nextProps.location.pathname != this.props.location.pathname) {
+      let query = nextProps.location.query;
+      this.handleInitial(nextProps.location);
+    }
   }
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeFooterToolbar);
+  }
+  handleInitial(location){
+    const {pathname, query} = location;
+    let id = '', type = TYPE.CREAT, isDisabled = false,
+      initialFormValue = {
+        sale_300: '',
+        sale_600 : '',
+        sale_1000 : '',
+        toySales : '',
+        trainsetSales : '',
+        ceramicsSales : '',
+        throughTicketSales : '',
+        singleSales : '',
+        destroySales : '',
+        grossEarnings : '',
+        user : ''
+      }
+    if(pathname.split('/')[3]){
+      id = pathname.split('/')[3];
+      type = TYPE.UPDATE;
+      isDisabled = true,
+      initialFormValue = {
+        sale_300: query.sale_300,
+        sale_600 : query.sale_600,
+        sale_1000 : query.sale_1000,
+        toySales : query.toySales,
+        trainsetSales : query.trainsetSales,
+        ceramicsSales : query.ceramicsSales,
+        throughTicketSales : query.throughTicketSales,
+        singleSales : query.singleSales,
+        destroySales : query.destroySales,
+        grossEarnings : query.grossEarnings,
+        user : query.user
+      }
+    }else{
+    }
+    this.setState({
+      type : type,
+      id : id,
+      isDisabled : isDisabled,
+      initialFormValue : initialFormValue
+    })
+
   }
   resizeFooterToolbar = () => {
     const sider = document.querySelectorAll('.ant-layout-sider')[0];
@@ -53,7 +122,33 @@ class AdvancedForm extends PureComponent {
       this.setState({ width });
     }
   };
+  getParamentsFromHistory = () => {
+    let query;
+    let localStorageData = localStorage.getItem("enteringDetials");
+    if(this.props.location.query){
+      query = this.props.location.query;
+    }else if(localStorageData){
+      query = JSON.parse(localStorageData);
+    }
+    localStorage.setItem( "enteringDetials",JSON.stringify(query));
+    return query;
+  }
+
+  handleChangeClick = () =>{
+    const { form } = this.props;
+    let isDisabled = this.state.isDisabled;
+    let formName = ['sale_300', 'sale_600', 'sale_1000', 'toySales', 'trainsetSales',
+      'ceramicsSales', 'throughTicketSales', 'singleSales', 'destroySales', 'grossEarnings',
+      'user'];
+    if(!isDisabled){
+      form.resetFields(formName);
+    }
+    this.setState({
+      isDisabled : !isDisabled
+    })
+  }
   render() {
+    let {isDisabled, initialFormValue} = this.state;
     const { form, dispatch, submitting } = this.props;
     const { getFieldDecorator, validateFieldsAndScroll, getFieldsError } = form;
     const validate = () => {
@@ -119,11 +214,11 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.sale_300}>
                   <Input.Group compact>
                     {getFieldDecorator('sale_300', {
-                      initialValue: '',
+                      initialValue: initialFormValue.sale_300,
                       rules: [{ required: true, message: '请输入销售张数' }],
                     })(
-                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}}/>)}
-                    <Input value='张'
+                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
+                      <Input value='张'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
                 </Form.Item>
@@ -132,10 +227,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.sale_600}>
                   <Input.Group compact>
                     {getFieldDecorator('sale_600', {
-                      initialValue: '',
+                      initialValue: initialFormValue.sale_600,
                       rules: [{ required: true, message: '请输入销售张数' }],
                     })(
-                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='张'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -145,10 +240,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.sale_1000}>
                   <Input.Group compact>
                     {getFieldDecorator('sale_1000', {
-                      initialValue: '',
+                      initialValue: initialFormValue.sale_1000,
                       rules: [{ required: true, message: '请输入销售张数' }],
                     })(
-                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={0} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='张'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -160,10 +255,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.toySales}>
                   <Input.Group compact>
                     {getFieldDecorator('toySales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.toySales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -173,10 +268,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.trainsetSales}>
                   <Input.Group compact>
                     {getFieldDecorator('trainsetSales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.trainsetSales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -186,10 +281,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.ceramicsSales}>
                   <Input.Group compact>
                     {getFieldDecorator('ceramicsSales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.ceramicsSales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -201,10 +296,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.destroySales}>
                   <Input.Group compact>
                     {getFieldDecorator('destroySales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.destroySales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -214,10 +309,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.singleSales}>
                   <Input.Group compact>
                     {getFieldDecorator('singleSales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.singleSales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -227,10 +322,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.throughTicketSales}>
                   <Input.Group compact>
                     {getFieldDecorator('throughTicketSales', {
-                      initialValue: '',
+                      initialValue: initialFormValue.throughTicketSales,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -242,10 +337,10 @@ class AdvancedForm extends PureComponent {
                 <Form.Item label={fieldLabels.grossEarnings}>
                   <Input.Group compact>
                     {getFieldDecorator('grossEarnings', {
-                      initialValue: '',
+                      initialValue: initialFormValue.grossEarnings,
                       rules: [{ required: true, message: '请输入销售金额' }],
                     })(
-                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}}/>)}
+                      <InputNumber min={0} precision={2} style={{width:'calc(100% - 60px)'}} disabled={isDisabled}/>)}
                     <Input value='元'
                            style={{ width: 60 ,'textAlign':'center'}} disabled/>
                   </Input.Group>
@@ -254,9 +349,9 @@ class AdvancedForm extends PureComponent {
               <Col lg={8} md={8} sm={24}>
                 <Form.Item label={fieldLabels.user}>
                     {getFieldDecorator('user', {
-                      initialValue: '',
+                      initialValue: initialFormValue.user,
                       rules: [{ required: true, message: '请输入录入人' }],
-                    })(<Select>
+                    })(<Select disabled={isDisabled}>
                       <Option value='陈三日'>陈三日</Option>
                       <Option value='张三日'>张三日</Option>
                     </Select>)}
@@ -267,6 +362,9 @@ class AdvancedForm extends PureComponent {
         </Card>
         <FooterToolbar style={{ width: this.state.width }}>
           {getErrorInfo()}
+          {this.state.type == TYPE.UPDATE && <Button onClick={this.handleChangeClick} loading={submitting}>
+            {this.state.isDisabled ? '修改' : '取消'}
+          </Button>}
           <Button type="primary" onClick={validate} loading={submitting}>
             提交
           </Button>

@@ -171,13 +171,13 @@ export const getRouterData = app => {
     // '/user/:id': {
     //   component: dynamicWrapper(app, [], () => import('../routes/User/SomeComponent')),
     // },
-    '/entering' : {
-      component: dynamicWrapper(app, ['profit'], () => import('../routes/Entering/entering')),
+    '/history/entering' : {
+      component: dynamicWrapper(app, ['profit'], () => import('../routes/History/Entering/entering')),
     },
-    '/entering/:id' : {
-      component: dynamicWrapper(app, ['profit'], () => import('../routes/Entering/entering')),
+    '/history/entering/:id' : {
+      component: dynamicWrapper(app, ['profit'], () => import('../routes/History/Entering/entering')),
     },
-    '/history' : {
+    '/history/list' : {
       component: dynamicWrapper(app, ['profit'], () => import('../routes/History/History')),
     },
     '/chart' : {

@@ -13,7 +13,6 @@ import {
   Menu,
   Dropdown,
 } from 'antd';
-import numeral from 'numeral';
 import {
   ChartCard,
   yuan,
@@ -22,12 +21,12 @@ import {
   MiniProgress,
   Field,
   HuBarAndLine,
+  HuPie,
   Pie,
   TimelineChart,
-  HuDoubleLineChart
+  HuSingleLine,
+  HuSunburst
 } from 'components/Charts';
-import Trend from 'components/Trend';
-import NumberInfo from 'components/NumberInfo';
 import { getTimeDistance } from '../../utils/utils';
 
 import styles from './Chart.less';
@@ -35,14 +34,6 @@ import styles from './Chart.less';
 
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
-
-const rankingListData = [];
-for (let i = 0; i < 7; i += 1) {
-  rankingListData.push({
-    title: `工专路 ${i} 号店`,
-    total: 323234,
-  });
-}
 
 const Yuan = ({ children }) => (
   <span dangerouslySetInnerHTML={{ __html: yuan(children) }} /> /* eslint-disable-line react/no-danger */
@@ -58,7 +49,7 @@ export default class Analysis extends Component {
   state = {
     salesType: 'all',
     currentTabKey: '',
-    rangePickerValue: getTimeDistance('year'),
+    rangePickerValue: getTimeDistance('month'),
   };
 
   componentDidMount() {
@@ -68,6 +59,9 @@ export default class Analysis extends Component {
     this.props.dispatch({
       type: 'profit/fetchTimeLineData',
     });
+    this.props.dispatch({
+      type:'profit/fetchProfitData'
+    })
   }
 
   componentWillUnmount() {
@@ -76,18 +70,6 @@ export default class Analysis extends Component {
       type: 'chart/clear',
     });
   }
-
-  handleChangeSalesType = e => {
-    this.setState({
-      salesType: e.target.value,
-    });
-  };
-
-  handleTabChange = key => {
-    this.setState({
-      currentTabKey: key,
-    });
-  };
 
   handleRangePickerChange = rangePickerValue => {
     this.setState({
@@ -123,44 +105,18 @@ export default class Analysis extends Component {
     }
   }
 
+
+  dbClick(ev){
+    console.log('ev....',ev);
+    console.log('ev.items',ev.data._origin)
+
+  }
   render() {
-    const { rangePickerValue, salesType, currentTabKey } = this.state;
-    const { chart, loading ,profitLoading, profit:{timeLineData}} = this.props;
-    let doubleTimeLineData = timeLineData ?
-      timeLineData.sort(function(a,b){
-        return Date.parse(a.x) - Date.parse(b.x);//时间正序
-      }) : undefined;
-
-    const {
-      visitData,
-      visitData2,
-      salesData,
-      searchData,
-      offlineData,
-      offlineChartData,
-      salesTypeData,
-      salesTypeDataOnline,
-      salesTypeDataOffline,
-    } = chart;
-    const salesPieData =
-      salesType === 'all'
-        ? salesTypeData
-        : salesType === 'online' ? salesTypeDataOnline : salesTypeDataOffline;
-
-    const menu = (
-      <Menu>
-        <Menu.Item>操作一</Menu.Item>
-        <Menu.Item>操作二</Menu.Item>
-      </Menu>
-    );
-
-    const iconGroup = (
-      <span className={styles.iconGroup}>
-        <Dropdown overlay={menu} placement="bottomRight">
-          <Icon type="ellipsis" />
-        </Dropdown>
-      </span>
-    );
+    const { rangePickerValue } = this.state;
+    const { loading ,profitLoading, profit:{
+      cardSalesData, otherSalesData, thisMonthData, lastMonthData, profitChartData, realIncomeData, IncomeSunData
+      }
+    } = this.props;
 
     const salesExtra = (
       <div className={styles.salesExtraWrap}>
@@ -182,198 +138,489 @@ export default class Analysis extends Component {
         />
       </div>
     );
-
-    const columns = [
-      {
-        title: '排名',
-        dataIndex: 'index',
-        key: 'index',
-      },
-      {
-        title: '搜索关键词',
-        dataIndex: 'keyword',
-        key: 'keyword',
-        render: text => <a href="/">{text}</a>,
-      },
-      {
-        title: '用户数',
-        dataIndex: 'count',
-        key: 'count',
-        sorter: (a, b) => a.count - b.count,
-        className: styles.alignRight,
-      },
-      {
-        title: '周涨幅',
-        dataIndex: 'range',
-        key: 'range',
-        sorter: (a, b) => a.range - b.range,
-        render: (text, record) => (
-          <Trend flag={record.status === 1 ? 'down' : 'up'}>
-            <span style={{ marginRight: 4 }}>{text}%</span>
-          </Trend>
-        ),
-        align: 'right',
-      },
-    ];
-
-    const activeKey = currentTabKey || (offlineData[0] && offlineData[0].name);
-
-    const CustomTab = ({ data, currentTabKey: currentKey }) => (
-      <Row gutter={8} style={{ width: 138, margin: '8px 0' }}>
-        <Col span={12}>
-          <NumberInfo
-            title={data.name}
-            subTitle="转化率"
-            gap={2}
-            total={`${data.cvr * 100}%`}
-            theme={currentKey !== data.name && 'light'}
-          />
-        </Col>
-        <Col span={12} style={{ paddingTop: 36 }}>
-          <Pie
-            animate={false}
-            color={currentKey !== data.name && '#BDE4FF'}
-            inner={0.55}
-            tooltip={false}
-            margin={[0, 0, 0, 0]}
-            percent={data.cvr * 100}
-            height={64}
-          />
-        </Col>
-      </Row>
-    );
-    const topColResponsiveProps = {
-      xs: 24,
-      sm: 12,
-      md: 12,
-      lg: 12,
-      xl: 6,
-      style: { marginBottom: 24 },
-    };
-    let saleData = [],destoryData = [];
-    console.log('doubleTimeLineData',doubleTimeLineData)
-    if(timeLineData){
-      for(let i = doubleTimeLineData.length - 1; i > doubleTimeLineData.length - 31; i--){
-        saleData.push({
-          x : doubleTimeLineData[i].x,
-          y : doubleTimeLineData[i].y2,
-          title1 : '销售额',
-          // y1 : doubleTimeLineData[i].y1,
-
-        })
-        destoryData.push({
-          x : doubleTimeLineData[i].x,
-          y : doubleTimeLineData[i].y1,
-          title1 : '销卡额',
-        })
-      }
+    const HuSunburstData = {
+      "label": "root",
+      "children": [{
+        "label": "类别 1",
+        "children": [{
+          "label": "类别 1.1",
+          "children": [{
+            "label": "类别 1.1.1",
+            "children": [{
+              "label": "类别 1.1.1.1",
+              "children": [{
+                "label": "类别 1.1.1.1.1",
+                "children": null,
+                "uv": 1,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 0,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 1,
+          "count": 0
+        }],
+        "uv": 0,
+        "sum": 1,
+        "count": 0
+      }, {
+        "label": "类别 2",
+        "children": [
+          {
+          "label": "类别 2.1",
+          "children": [{
+            "label": "类别 2.1.1",
+            "children": [{
+              "label": "类别 2.1.1.1",
+              "children": [{
+                "label": "类别 2.1.1.1.1",
+                "value": "口碑-本地生活事业部-东成西就大区-大中台-运营",
+                "children": [{
+                  "label": "类别 2.1.1.1.1.1",
+                  "children": null,
+                  "uv": 1,
+                  "sum": 1,
+                  "count": 0
+                }, {
+                  "label": "类别 2.1.1.1.1.2",
+                  "children": null,
+                  "uv": 1,
+                  "sum": 1,
+                  "count": 0
+                }],
+                "uv": 1,
+                "sum": 3,
+                "count": 0
+              }],
+              "uv": 1,
+              "sum": 4,
+              "count": 0
+            }, {
+              "label": "类别 2.1.1.2",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 5,
+            "count": 0
+          }, {
+            "label": "类别 2.1.2",
+            "children": [{
+              "label": "类别 2.1.2.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }, {
+              "label": "类别 2.1.2.2",
+              "children": [{
+                "label": "类别 2.1.2.2.1",
+                "children": null,
+                "uv": 1,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 0,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 2,
+            "count": 0
+          }, {
+            "label": "类别 2.1.3",
+            "children": [{
+              "label": "类别 2.1.3.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }, {
+            "label": "类别 2.1.4",
+            "children": [{
+              "label": "类别 2.1.4.1",
+              "children": null,
+              "uv": 2,
+              "sum": 2,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 2,
+            "count": 0
+          }, {
+            "label": "类别 2.1.5",
+            "children": null,
+            "uv": 1,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 1,
+          "sum": 12,
+          "count": 0
+        }, {
+          "label": "类别 2.2",
+          "children": [{
+            "label": "类别 2.2.1",
+            "children": null,
+            "uv": 1,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 1,
+          "sum": 2,
+          "count": 0
+        }, {
+          "label": "类别 2.3",
+          "children": null,
+          "uv": 1,
+          "sum": 1,
+          "count": 0
+        }, {
+          "label": "类别 2.4",
+          "children": [{
+            "label": "类别 2.4.1",
+            "children": [{
+              "label": "类别 2.4.1.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 1,
+          "count": 0
+        }, {
+          "label": "类别 2.5",
+          "children": [{
+            "label": "类别 2.5.1",
+            "children": null,
+            "uv": 3,
+            "sum": 3,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 3,
+          "count": 0
+        }],
+        "uv": 1,
+        "sum": 20,
+        "count": 0
+      }, {
+        "label": "类别 3",
+        "children": [{
+          "label": "类别 3.1",
+          "children": [{
+            "label": "类别 3.1.1",
+            "children": [{
+              "label": "类别 3.1.1.1",
+              "children": [{
+                "label": "类别 3.1.1.1.1",
+                "children": [{
+                  "label": "类别 3.1.1.1.1.1",
+                  "children": null,
+                  "uv": 1,
+                  "sum": 1,
+                  "count": 0
+                }],
+                "uv": 0,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 0,
+              "sum": 1,
+              "count": 0
+            }, {
+              "label": "类别 3.1.1.2",
+              "children": [{
+                "label": "类别 3.1.1.2.1",
+                "children": [{
+                  "label": "类别 3.1.1.2.1.1",
+                  "children": null,
+                  "uv": 2,
+                  "sum": 2,
+                  "count": 0
+                }],
+                "uv": 0,
+                "sum": 2,
+                "count": 0
+              }],
+              "uv": 1,
+              "sum": 3,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 4,
+            "count": 0
+          }, {
+            "label": "类别 3.1.2",
+            "children": [{
+              "label": "类别 3.1.2.1",
+              "children": null,
+              "uv": 3,
+              "sum": 3,
+              "count": 0
+            }, {
+              "label": "类别 3.1.2.2",
+              "children": [{
+                "_id": "数据产品&运营",
+                "label": "数据产品&运营",
+                "value": "蚂蚁金服-平台数据技术事业群-数据平台部-数据资产平台-数据产品&运营",
+                "children": null,
+                "uv": 1,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 0,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 4,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 8,
+          "count": 0
+        }, {
+          "label": "类别 3.2",
+          "children": [{
+            "label": "类别 3.2.1",
+            "children": [{
+              "label": "类别 3.2.1.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }, {
+              "label": "类别 3.2.1.2",
+              "children": [{
+                "label": "类别 3.2.1.2.1",
+                "children": null,
+                "uv": 1,
+                "sum": 1,
+                "count": 0
+              }, {
+                "label": "类别 3.2.1.2.2",
+                "children": [{
+                  "_id": "城市民生运营",
+                  "label": "城市民生运营",
+                  "value": "蚂蚁金服-支付宝事业群-商家服务及开放平台事业部-公共服务部-运营部-城市民生运营",
+                  "children": null,
+                  "uv": 1,
+                  "sum": 1,
+                  "count": 0
+                }],
+                "uv": 0,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 1,
+              "sum": 3,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 4,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 4,
+          "count": 0
+        }, {
+          "label": "类别 3.3",
+          "children": [{
+            "label": "类别 3.3.1",
+            "children": [{
+              "label": "类别 3.3.1.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 1,
+          "sum": 2,
+          "count": 0
+        }, {
+          "label": "类别 3.4",
+          "children": [{
+            "label": "类别 3.4.1",
+            "children": [{
+              "label": "类别 3.4.1.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }, {
+              "label": "3.4.1.2",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 2,
+            "count": 0
+          }, {
+            "label": "类别 3.4.2",
+            "children": null,
+            "uv": 1,
+            "sum": 1,
+            "count": 0
+          }, {
+            "label": "类别 3.4.3",
+            "children": [{
+              "label": "类别 3.4.3.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 4,
+          "count": 0
+        }, {
+          "label": "类别 3.5",
+          "children": [{
+            "label": "类别 3.5.1",
+            "children": [{
+              "label": "类别 3.5.1.1",
+              "children": null,
+              "uv": 2,
+              "sum": 2,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 2,
+            "count": 0
+          }, {
+            "label": "类别 3.5.2",
+            "children": [{
+              "label": "类别 3.5.2.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 3,
+          "count": 0
+        }, {
+          "label": "类别 3.6",
+          "children": [{
+            "label": "类别 3.6.1",
+            "children": [{
+              "label": "类别 3.6.1.1",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }, {
+              "label": "类别 3.6.1.2",
+              "children": null,
+              "uv": 1,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 2,
+            "count": 0
+          }],
+          "uv": 1,
+          "sum": 3,
+          "count": 0
+        }, {
+          "label": "类别 3.7",
+          "children": [{
+            "label": "类别 3.7.1",
+            "children": [{
+              "label": "类别 3.7.1.1",
+              "children": [{
+                "label": "类别 3.7.1.1.1",
+                "children": null,
+                "uv": 1,
+                "sum": 1,
+                "count": 0
+              }],
+              "uv": 0,
+              "sum": 1,
+              "count": 0
+            }],
+            "uv": 0,
+            "sum": 1,
+            "count": 0
+          }],
+          "uv": 0,
+          "sum": 1,
+          "count": 0
+        }],
+        "uv": 0,
+        "sum": 25,
+        "count": 0
+      }]
     }
-    saleData.reverse();
-    destoryData.reverse();
-    console.log('saleData',saleData)
-
 
     return (
       <Fragment>
-        <Row gutter={24}>
-          <Col {...topColResponsiveProps}>
-            <ChartCard
-              bordered={false}
-              title="总销售额"
-              action={
-                <Tooltip title="指标说明">
-                  <Icon type="info-circle-o" />
-                </Tooltip>
-              }
-              total={() => <Yuan>126560</Yuan>}
-              footer={<Field label="日均销售额" value={`￥${numeral(12423).format('0,0')}`} />}
-              contentHeight={46}
-            >
-              <Trend flag="up" style={{ marginRight: 16 }}>
-                周同比<span className={styles.trendText}>12%</span>
-              </Trend>
-              <Trend flag="down">
-                日环比<span className={styles.trendText}>11%</span>
-              </Trend>
-            </ChartCard>
-          </Col>
-          <Col {...topColResponsiveProps}>
-            <ChartCard
-              bordered={false}
-              title="访问量"
-              action={
-                <Tooltip title="指标说明">
-                  <Icon type="info-circle-o" />
-                </Tooltip>
-              }
-              total={numeral(8846).format('0,0')}
-              footer={<Field label="日访问量" value={numeral(1234).format('0,0')} />}
-              contentHeight={46}
-            >
-              <MiniArea color="#975FE4" data={visitData} />
-            </ChartCard>
-          </Col>
-          <Col {...topColResponsiveProps}>
-            <ChartCard
-              bordered={false}
-              title="支付笔数"
-              action={
-                <Tooltip title="指标说明">
-                  <Icon type="info-circle-o" />
-                </Tooltip>
-              }
-              total={numeral(6560).format('0,0')}
-              footer={<Field label="转化率" value="60%" />}
-              contentHeight={46}
-            >
-              <MiniBar data={visitData} />
-            </ChartCard>
-          </Col>
-          <Col {...topColResponsiveProps}>
-            <ChartCard
-              bordered={false}
-              title="运营活动效果"
-              action={
-                <Tooltip title="指标说明">
-                  <Icon type="info-circle-o" />
-                </Tooltip>
-              }
-              total="78%"
-              footer={
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                  <Trend flag="up" style={{ marginRight: 16 }}>
-                    周同比<span className={styles.trendText}>12%</span>
-                  </Trend>
-                  <Trend flag="down">
-                    日环比<span className={styles.trendText}>11%</span>
-                  </Trend>
-                </div>
-              }
-              contentHeight={46}
-            >
-              <MiniProgress percent={78} strokeWidth={8} target={80} color="#13C2C2" />
-            </ChartCard>
-          </Col>
-        </Row>
-
         <Card loading={loading} bordered={false} bodyStyle={{ padding: 0 }}>
           <div className={styles.salesCard}>
             <Tabs tabBarExtraContent={salesExtra} size="large" tabBarStyle={{ marginBottom: 24 }}>
               <TabPane tab="销售额" key="sales">
                 <div className={styles.salesBar}>
-                  <HuBarAndLine height={295} data={saleData}
+                  {profitChartData &&
+                  <HuBarAndLine height={295}
+                       title="销售总额统计图"
+                       data={profitChartData.grossEarningsChartData}
+                       thisAverage = {thisMonthData.grossEarningsAverage}
+                       lastAverage = {lastMonthData.grossEarningsAverage}
                        padding={[20, 48, 30, 48]}
                         scale = {{
                           x:{
                             type:'time',
                             mask:'MM-DD',
                             tickCount:15
-                          }}}/>
+                          }}}/>}
+                  <div className={styles.grossEarningsContainer}>
+                    <span>本月销售总额：￥{thisMonthData && thisMonthData.grossEarningsSum}</span>
+                    <span>上月销售总额：￥{lastMonthData && lastMonthData.grossEarningsSum}</span>
+                  </div>
                 </div>
               </TabPane>
               <TabPane tab="销卡量" key="views">
                 <div className={styles.salesBar}>
-                  <HuBarAndLine height={292} data={destoryData}
+                  {profitChartData &&
+                  <HuBarAndLine height={292}
+                       title="销卡额统计图"
+                       data={profitChartData.destroySalesChartData}
+                       thisAverage = {thisMonthData.destroySalesAverage}
+                       lastAverage = {lastMonthData.destroySalesAverage}
                        padding={[20, 20, 30, 38]}
                        scale = {{
                          x:{
@@ -382,7 +629,11 @@ export default class Analysis extends Component {
                            tickCount:15
                          }
                        }}
-                  />
+                  />}
+                  <div className={styles.grossEarningsContainer}>
+                    <span>本月销卡总额：￥{thisMonthData && thisMonthData.destroySalesSum}</span>
+                    <span>上月销卡总额：￥{lastMonthData && lastMonthData.destroySalesSum}</span>
+                  </div>
                 </div>
               </TabPane>
             </Tabs>
@@ -391,106 +642,98 @@ export default class Analysis extends Component {
 
         <Row gutter={24}>
           <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Card
-              loading={loading}
-              bordered={false}
-              title="线上热门搜索"
-              extra={iconGroup}
-              style={{ marginTop: 24 }}
-            >
-              <Row gutter={68}>
-                <Col sm={12} xs={24} style={{ marginBottom: 24 }}>
-                  <NumberInfo
-                    subTitle={
-                      <span>
-                        搜索用户数
-                        <Tooltip title="指标文案">
-                          <Icon style={{ marginLeft: 8 }} type="info-circle-o" />
-                        </Tooltip>
-                      </span>
-                    }
-                    gap={8}
-                    total={numeral(12321).format('0,0')}
-                    status="up"
-                    subTotal={17.1}
-                  />
-                  <MiniArea line height={45} data={visitData2} />
-                </Col>
-                <Col sm={12} xs={24} style={{ marginBottom: 24 }}>
-                  <NumberInfo
-                    subTitle="人均搜索次数"
-                    total={2.7}
-                    status="down"
-                    subTotal={26.2}
-                    gap={8}
-                  />
-                  <MiniArea line height={45} data={visitData2} />
-                </Col>
-              </Row>
-              <Table
-                rowKey={record => record.index}
-                size="small"
-                columns={columns}
-                dataSource={searchData}
-                pagination={{
-                  style: { marginBottom: 0 },
-                  pageSize: 5,
-                }}
-              />
-            </Card>
-          </Col>
-          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
-            <Card
+            {cardSalesData && <Card
               loading={loading}
               className={styles.salesCard}
               bordered={false}
-              title="销售额类别占比"
+              title="充值卡销售额占比"
               bodyStyle={{ padding: 24 }}
-              extra={
-                <div className={styles.salesCardExtra}>
-                  {iconGroup}
-                  <div className={styles.salesTypeRadio}>
-                    <Radio.Group value={salesType} onChange={this.handleChangeSalesType}>
-                      <Radio.Button value="all">全部渠道</Radio.Button>
-                      <Radio.Button value="online">线上</Radio.Button>
-                      <Radio.Button value="offline">门店</Radio.Button>
-                    </Radio.Group>
-                  </div>
-                </div>
-              }
-              style={{ marginTop: 24, minHeight: 509 }}
+              style={{ marginTop: 24}}
             >
-              <h4 style={{ marginTop: 8, marginBottom: 32 }}>销售额</h4>
-              <Pie
+              <HuPie
                 hasLegend
                 subTitle="销售额"
                 total={
-                  () => <Yuan>{salesPieData.reduce((pre, now) => now.y + pre, 0)}</Yuan>
+                  () => <Yuan>{cardSalesData.reduce((pre, now) => now.y + pre, 0)}</Yuan>
                 }
-                data={salesPieData}
+                data={cardSalesData}
                 valueFormat={value => <Yuan>{value}</Yuan>}
                 height={248}
                 lineWidth={4}
+              />
+            </Card>}
+          </Col>
+          <Col xl={12} lg={24} md={24} sm={24} xs={24}>
+            {otherSalesData && <Card
+              loading={loading}
+              className={styles.salesCard}
+              bordered={false}
+              title="其他项目销售额占比"
+              bodyStyle={{ padding: 24 }}
+              style={{ marginTop: 24}}
+            >
+              <HuPie
+                hasLegend
+                subTitle="销售额"
+                total={
+                  () => <Yuan>{otherSalesData.reduce((pre, now) => now.y + pre, 0)}</Yuan>
+                }
+                data={otherSalesData}
+                valueFormat={value => <Yuan>{value}</Yuan>}
+                height={248}
+                lineWidth={4}
+                colors={[ '#ffa940', '#f04864', '#ffec3d']}
+              />
+            </Card>}
+          </Col>
+        </Row>
+
+        {realIncomeData && <Card
+          title="实际收入趋势图"
+          loading={profitLoading}
+          bordered={false}
+          bodyStyle = {{ padding: '5px 0 32px 24px'}}
+          style={{marginTop: 32}}
+        >
+          <HuSingleLine
+            title=""
+            height={400}
+            data={realIncomeData}
+            titleMap = {{y: '实际销售额'}}
+            thisAverage = {thisMonthData.grossEarningsAverage}
+            lastAverage = {lastMonthData.grossEarningsAverage}
+          />
+        </Card>}
+        <Row gutter={24}>
+          <Col  xl={12} lg={12} md={12} sm={24} xs={24}>
+            <Card
+              title="收入分布统计图"
+              bordered={false}
+              bodyStyle = {{ padding: '0'}}
+              style={{marginTop: 32}}>
+              {IncomeSunData && <HuSunburst
+                data={IncomeSunData}
+                height={400}
+                color={['value', '#d9f7be-#52c41a-#237804']}
+                onPlotDblClick = {this.dbClick}
+              />}
+            </Card>
+          </Col>
+          <Col  xl={12} lg={12} md={12} sm={24} xs={24}>
+            <Card
+              title="支出分布统计图"
+              bordered={false}
+              bodyStyle = {{ padding: '0'}}
+              style={{marginTop: 32}}>
+              <HuSunburst
+                data={HuSunburstData}
+                height={400}
+                color={['value','#ffccc7-#f5222d-#a8071a']}
               />
             </Card>
           </Col>
         </Row>
 
-        {timeLineData && <Card
-          loading={profitLoading}
-          bordered={false}
-          bodyStyle = {{ padding: '0 0 32px 24px'}}
-          style={{marginTop: 32}}
-        >
-          <HuDoubleLineChart
-            height={400}
-            data={doubleTimeLineData}
-            titleMap = {{
-              y1: '销卡额',
-              y2: '总收入',
-            }}
-          />
-        </Card>}
       </Fragment>
     );
   }

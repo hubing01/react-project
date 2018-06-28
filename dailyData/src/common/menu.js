@@ -155,15 +155,9 @@ const menuData = [
     ],
   },
   {
-    name: '当日收益录入',
-    icon: 'form',
-    path: 'entering',
-    children: [],
-  },
-  {
-    name: '往期收益查询',
+    name: '收益列表',
     icon: 'profile',
-    path: 'history',
+    path: 'history/list',
     children: [],
   },
   {
